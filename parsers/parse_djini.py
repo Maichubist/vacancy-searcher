@@ -17,7 +17,7 @@ class DjiniParser(Parser):
             f"=UKR&location={self.city}&exp_level={self.experience}")
         data = BS(result.text, "lxml")
         result = []
-        for el in data.select("ul > li > div > div > a"):
+        for el in data.select("a.profile"):
             if el.find('span') is None or len(el.find('span')) > 2 or 'company' in el.get('href'):
                 pass
             else:
@@ -25,7 +25,6 @@ class DjiniParser(Parser):
                     "link": f"https://djinni.co{el.get('href')}",
                     "name": el.find('span').text
                 })
-                # result[f"https://djinni.co{el.get('href')}"] = el.find('span').text
         return result
 
 # print(DjiniParser().get_result())

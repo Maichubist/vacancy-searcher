@@ -12,6 +12,7 @@ from keyboards.keyboard_buttons import markup_keyboard, markup_keyboard_work
 from keyboards.inline_keyboard import markup_city
 from parsers.parse_work_ua import WorkUaParser
 from parsers.parse_djini import DjiniParser
+from parsers.parse_dou import DouParser
 from waiting_state import GetCity, GetExperience, GetProfession
 from db.user import user_service
 
@@ -86,7 +87,13 @@ async def city_processor(callback_query: types.CallbackQuery):
         if users[message.chat.id]['state'] == 2:
             source = users[message.from_user.id]['source']
             if source == "Dou":
-                await bot.send_message(chat_id=message.chat.id, text=f'Сервіс в розробці')
+                try:
+                    result_do = DouParser(vacancy=users[message.from_user.id]['profession'],
+                                          city=users[message.from_user.id]['city']).get_result()
+                    await bot.send_message(chat_id=message.chat.id, text=f'{result_do}')
+                    logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result {result_do}')
+                except Exception as er:
+                    logger.error(f'{message.from_user.id} | {message.from_user.full_name} ERROR {er}')
                 logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result')
             elif source == "Djini":
                 try:
@@ -117,9 +124,11 @@ async def city_processor(callback_query: types.CallbackQuery):
                                        city=users[message.from_user.id]['city']).get_result()
                 result_w = WorkUaParser(vacancy=users[message.from_user.id]['profession'],
                                         city=users[message.from_user.id]['city']).get_result()
-                await bot.send_message(callback_query.from_user.id, f'{result_w}, {result_d}, {users}')
+                result_do = DouParser(vacancy=users[message.from_user.id]['profession'],
+                                       city=users[message.from_user.id]['city']).get_result()
+                await bot.send_message(callback_query.from_user.id, f'{result_w}, {result_d}, {result_do}, {users}')
                 logger.info(
-                    f'{message.from_user.id} | {message.from_user.full_name} got asked result {result_d} {result_w}')
+                    f'{message.from_user.id} | {message.from_user.full_name} got asked result {result_d} {result_w} {result_do}')
             except Exception as error:
                 logger.error(f'{message.from_user.id} | {message.from_user.full_name} ERROR {error}')
         else:
@@ -135,7 +144,8 @@ async def find_job(message: types.Message):
     users[message.chat.id] = {'state': 3}
     logger.info(users)
     user_service.add_user(tg_id=message.chat.id, profession='Python', city='Dnipro')
-    await bot.send_message(chat_id=message.chat.id, text="Ти успішно підписався на вакансію, чекай підбірку нових вакансій кожного вечора")
+    await bot.send_message(chat_id=message.chat.id,
+                           text="Ти успішно підписався на вакансію, чекай підбірку нових вакансій кожного вечора")
 
 
 async def send_updates():
@@ -146,9 +156,8 @@ async def send_updates():
         if r and len(r[0][1]) > 0:
 
             for i in range(len(r)):
-
                 await bot.send_message(chat_id=r[i][0], text=f"Ти підписався  на вакансію {r}")
-        await asyncio.sleep(60)
+        await asyncio.sleep(5)
 
 
 async def main():
