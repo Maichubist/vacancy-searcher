@@ -16,12 +16,16 @@ class DjiniParser(Parser):
             f"https://djinni.co/jobs/?keywords={self.vacancy}&all-keywords=&any-of-keywords=&exclude-keywords=&region"
             f"=UKR&location={self.city}&exp_level={self.experience}")
         data = BS(result.text, "lxml")
-        result = {}
+        result = []
         for el in data.select("ul > li > div > div > a"):
             if el.find('span') is None or len(el.find('span')) > 2 or 'company' in el.get('href'):
                 pass
             else:
-                result[f"https://djinni.co{el.get('href')}"] = el.find('span').text
+                result.append({
+                    "link": f"https://djinni.co{el.get('href')}",
+                    "name": el.find('span').text
+                })
+                # result[f"https://djinni.co{el.get('href')}"] = el.find('span').text
         return result
 
 # print(DjiniParser().get_result())

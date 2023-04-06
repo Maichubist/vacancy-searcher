@@ -13,6 +13,7 @@ markup_keyboard = ReplyKeyboardMarkup(
 ).row(
     find_job,
     subscribe,
+).add(
     find_by_source,
 )
 

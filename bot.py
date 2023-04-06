@@ -4,6 +4,7 @@ import time
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.utils import executor
 from dotenv import dotenv_values
 
 from logger import logger
@@ -12,6 +13,7 @@ from keyboards.inline_keyboard import markup_city
 from parsers.parse_work_ua import WorkUaParser
 from parsers.parse_djini import DjiniParser
 from waiting_state import GetCity, GetExperience, GetProfession
+from db.user import user_service
 
 config = dotenv_values(".env")
 TOKEN = config["TOKEN"]
@@ -50,6 +52,7 @@ async def to_find_job(message: types.Message):
     await bot.send_message(chat_id=message.chat.id,
                            text='Обери місто, де хочеш знайти роботу', reply_markup=markup_city)
 
+
 @dp.message_handler(lambda message: message.text == "Шукати вакансію на певному ресурсі")
 async def find_vacancy(message: types.Message):
     logger.info(f'{message.from_user.id} | {message.from_user.full_name} pressed "Шукати вакансію на певному ресурсі"')
@@ -68,7 +71,7 @@ async def find_vacancy_by_source(message: types.Message):
 
 
 @dp.callback_query_handler(lambda calback_query: calback_query.data.startswith('city_'))
-async def city_proccessor(callback_query: types.CallbackQuery):
+async def city_processor(callback_query: types.CallbackQuery):
     users[callback_query.from_user.id]["city"] = callback_query.data.replace('city_', '')
     logger.info(f'{callback_query.from_user.id} | {callback_query.from_user.full_name} path {users}')
     await bot.send_message(callback_query.from_user.id, text="Веди професію")
@@ -90,7 +93,7 @@ async def city_proccessor(callback_query: types.CallbackQuery):
                     result_d = DjiniParser(vacancy=users[message.from_user.id]['profession'],
                                            city=users[message.from_user.id]['city']).get_result()
                     await bot.send_message(chat_id=message.chat.id, text=f'{result_d}')
-                    logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result')
+                    logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result {result_d}')
                 except Exception as er:
                     logger.error(f'{message.from_user.id} | {message.from_user.full_name} ERROR {er}')
             elif source == "Work.ua":
@@ -98,7 +101,7 @@ async def city_proccessor(callback_query: types.CallbackQuery):
                     result_w = WorkUaParser(vacancy=users[message.from_user.id]['profession'],
                                             city=users[message.from_user.id]['city']).get_result()
                     await bot.send_message(chat_id=message.chat.id, text=f'{result_w}')
-                    logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result')
+                    logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result {result_w}')
                 except Exception as err:
                     logger.error(f'{message.from_user.id} | {message.from_user.full_name} ERROR {err}')
             elif source == "Rabota.ua":
@@ -115,7 +118,8 @@ async def city_proccessor(callback_query: types.CallbackQuery):
                 result_w = WorkUaParser(vacancy=users[message.from_user.id]['profession'],
                                         city=users[message.from_user.id]['city']).get_result()
                 await bot.send_message(callback_query.from_user.id, f'{result_w}, {result_d}, {users}')
-                logger.info(f'{message.from_user.id} | {message.from_user.full_name} got asked result')
+                logger.info(
+                    f'{message.from_user.id} | {message.from_user.full_name} got asked result {result_d} {result_w}')
             except Exception as error:
                 logger.error(f'{message.from_user.id} | {message.from_user.full_name} ERROR {error}')
         else:
@@ -127,10 +131,29 @@ async def city_proccessor(callback_query: types.CallbackQuery):
 
 @dp.message_handler(lambda message: message.text == "Підписатись на вакансію")
 async def find_job(message: types.Message):
-    await bot.send_message(chat_id=message.chat.id, text=" Ти підписався  на вакансію")
+    logger.info(f'{message.from_user.id} | {message.from_user.full_name} pressed "Підписатись на вакансію"')
+    users[message.chat.id] = {'state': 3}
+    logger.info(users)
+    user_service.add_user(tg_id=message.chat.id, profession='Python', city='Dnipro')
+    await bot.send_message(chat_id=message.chat.id, text="Ти успішно підписався на вакансію, чекай підбірку нових вакансій кожного вечора")
+
+
+async def send_updates():
+    while True:
+
+        r = user_service.get_update()
+        # user_service.update_time(tg_id=message.chat.id)
+        if r and len(r[0][1]) > 0:
+
+            for i in range(len(r)):
+
+                await bot.send_message(chat_id=r[i][0], text=f"Ти підписався  на вакансію {r}")
+        await asyncio.sleep(60)
 
 
 async def main():
+    loop = asyncio.get_event_loop()
+    loop.create_task(send_updates())
     await dp.start_polling(bot)
 
 

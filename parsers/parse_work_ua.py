@@ -15,6 +15,12 @@ class WorkUaParser(Parser):
         # print(f"https://www.work.ua/jobs-{self.city}{self.vacancy}/?advs=1")
         result = requests.get(f"https://www.work.ua/jobs-{self.city}{self.vacancy}/?advs=1")
         data = BS(result.text, "lxml")
-        return {f"https://www.work.ua{el.get('href')}": el.text for el in data.select('div > h2 >a')}
+        return [
+            {
+                "link": f"https://www.work.ua{el.get('href')}",
+                "name": el.text
+            } for el in data.select('div > h2 >a')
+        ]
+        # return [{f"https://www.work.ua{el.get('href')}": el.text for el in data.select('div > h2 >a')}]
 
 # print(WorkUaParser("Python", "dnipro").get_result())
