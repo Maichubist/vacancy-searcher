@@ -15,7 +15,7 @@ from waiting_state import GetProfession
 
 
 
-TOKEN = os.environ['TOKEN']
+TOKEN = "6060282110:AAHWs-D5deqTXIQJNJsukntWgw-e8be9nHs"
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
