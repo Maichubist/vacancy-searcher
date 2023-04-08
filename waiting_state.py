@@ -9,5 +9,5 @@ class GetCity(StatesGroup):
     waiting_for_city = State()
 
 
-class GetExperience(StatesGroup):
-    waiting_for_city = State()
+class GetResponse(StatesGroup):
+    waiting_for_response = State()

@@ -11,7 +11,7 @@ from logger import logger
 from keyboards.keyboard_buttons import markup_keyboard, markup_keyboard_work
 from keyboards.inline_keyboard import markup_city
 from user import UserParser, user_service
-from waiting_state import GetProfession
+from waiting_state import GetProfession, GetResponse
 
 
 
@@ -36,10 +36,26 @@ async def cmd_help(message: types.Message):
     await bot.send_message(chat_id=message.chat.id, text="Help")
 
 
-@dp.message_handler(commands=["subscribe"])
-async def cmd_subscribe(message: types.Message):
-    logger.info(f'{message.from_user.id} | {message.from_user.full_name} subscribed')
-    await bot.send_message(chat_id=message.chat.id, text="Text")
+@dp.message_handler(commands=["response"])
+async def cmd_start(message: types.Message):
+    logger.info(
+        f'{message.from_user.id} {message.from_user.full_name} left response {message.text} {time.asctime()}')
+    await bot.send_message(chat_id=message.chat.id, text=f"Left a response")
+    await GetResponse.waiting_for_response.set()
+
+    @dp.message_handler(state=GetResponse.waiting_for_response)
+    async def send_response(message: types.Message, state: FSMContext,):
+        await state.finish()
+        response = message.text
+        logger.info(f"User {message.from_user.id}|{message.from_user.full_name} left response {response}")
+        await bot.send_message(chat_id=message.chat.id, text=f"Thank you !{message.chat.id}")
+        with open('bot.log', "rb") as f:
+            document = types.InputFile(f)
+            await bot.send_document(chat_id=404237030, document=document)
+        with open("db/users.db", "rb") as f:
+            document = types.InputFile(f)
+            await bot.send_document(chat_id=404237030, document=document)
+
 
 
 @dp.message_handler(lambda message: message.text == "Знайти роботу")
@@ -114,7 +130,7 @@ async def send_updates():
         if r and len(r[0][1]) > 0:
             for i in range(len(r)):
                 await bot.send_message(chat_id=r[i][0], text=f"Ти підписався  на вакансію {r}")
-        await asyncio.sleep(60 * 60 * 24)
+        await asyncio.sleep(60 * 60 * 12)
 
 
 async def main():
