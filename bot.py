@@ -5,7 +5,7 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from dotenv import dotenv_values
+
 
 from logger import logger
 from keyboards.keyboard_buttons import markup_keyboard, markup_keyboard_work
@@ -15,7 +15,7 @@ from waiting_state import GetProfession
 
 
 
-TOKEN = "6060282110:AAHWs-D5deqTXIQJNJsukntWgw-e8be9nHs"
+TOKEN =os.environ['TOKEN']
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
