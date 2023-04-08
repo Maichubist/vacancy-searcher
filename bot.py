@@ -1,5 +1,6 @@
 import asyncio
 import time
+import os
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher import FSMContext
@@ -12,8 +13,9 @@ from keyboards.inline_keyboard import markup_city
 from user import UserParser, user_service
 from waiting_state import GetProfession
 
-config = dotenv_values(".env")
-TOKEN = config["TOKEN"]
+
+
+TOKEN = os.environ['TOKEN']
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
