@@ -75,6 +75,7 @@ class UserParser:
         """
         try:
             user_service.add_user(tg_id=self.tg_id, profession=self.profession, city=self.city)
+            return f"Ти успішно підписався на вакансію {self.profession}"
         except Exception as err:
             logger.error(f"Error processing state three request: {err}")
             raise err

@@ -66,7 +66,7 @@ async def find_job(message: types.Message):
     users[message.chat.id]["tg_id"] = message.chat.id
     logger.info(users)
     await bot.send_message(chat_id=message.chat.id,
-                           text="Ти успішно підписався на вакансію, чекай підбірку нових вакансій кожного вечора",
+                           text="Обери місто, де плануєш шукати роботу",
                            reply_markup=markup_city)
 
 
