@@ -7,7 +7,6 @@ from parsers.parser import Parser
 
 class DouParser(Parser):
     def __init__(self, vacancy: str = "python", city: str = "", experience: str = "") -> None:
-        # self.user = user
         self.vacancy = vacancy.replace(' ', '+')
         self.city = f"{city}"
         self.experience = experience

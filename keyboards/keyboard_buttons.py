@@ -27,7 +27,7 @@ markup_keyboard_work = ReplyKeyboardMarkup(
     one_time_keyboard=True
 ).row(
     work_ua,
-    rabota_ua,
+    # rabota_ua,
     djini,
     dou,
 )
