@@ -98,6 +98,7 @@ async def find_vacancy_by_source(message: types.Message):
 
 @dp.callback_query_handler(lambda calback_query: calback_query.data.startswith('city_'))
 async def city_processor(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
     users[callback_query.from_user.id]["city"] = callback_query.data.replace('city_', '')
     logger.info(f'{callback_query.from_user.id} | {callback_query.from_user.full_name} path {users}')
     await bot.send_message(callback_query.from_user.id, text="Веди професію", reply_markup=None)
@@ -127,10 +128,13 @@ async def send_updates():
 
         r = user_service.get_update()
 
-        if r and len(r[0][1]) > 0:
-            for i in range(len(r)):
+        for i in range(len(r)):
+            if r and len(r[i][1]) > 0:
                 await bot.send_message(chat_id=r[i][0], text=f"Ти підписався  на вакансію {r}")
-        await asyncio.sleep(60 * 60)
+            else:
+                await bot.send_message(chat_id=r[i][0], text=f"Нових вакансій не знайдено")
+
+        await asyncio.sleep(60*60)
 
 
 async def main():

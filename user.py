@@ -145,7 +145,7 @@ class UserService:
 
         for vacancy in data:
             if not existing_vacancies or vacancy["link"] not in existing_vacancies:
-                logger.info(f"Found new vacancyes for {tg_id}")
+
                 result.append(vacancy)
                 session.add(
                     Vacancy(
@@ -154,9 +154,12 @@ class UserService:
                         name=vacancy["name"]
                     )
                 )
-            else:
-                logger.info(f"There is no new vacancyes for {tg_id}")
+
         session.commit()
+        if result:
+            logger.info(f"Found new vacancyes for {tg_id}")
+        else:
+            logger.info(f"There is no new vacancyes for {tg_id}")
         return result
 
     @classmethod
@@ -173,6 +176,8 @@ class UserService:
                      + WorkUaParser(user.profession, user.city).get_result() \
                      + DouParser(user.profession, user.city).get_result()
             relult.append((user.tg_id, cls.process_vacancies(tg_id=user.tg_id, data=result)))
+
+
         return relult
 
 
