@@ -130,7 +130,7 @@ async def send_updates():
         if r and len(r[0][1]) > 0:
             for i in range(len(r)):
                 await bot.send_message(chat_id=r[i][0], text=f"Ти підписався  на вакансію {r}")
-        await asyncio.sleep(60 * 60 * 12)
+        await asyncio.sleep(60 * 60)
 
 
 async def main():
