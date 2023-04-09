@@ -34,6 +34,8 @@ class UserParser:
             return self.process_state_two()
         elif self.state == 3:
             return self.process_state_three()
+        elif self.state == 4:
+            return self.process_state_four()
         else:
             raise TypeError(f"Got unexpected state code {self.state}")
 
@@ -68,7 +70,7 @@ class UserParser:
             logger.error(f"Error processing state two request: {err}")
             raise err
 
-    def process_state_three(self):
+    def process_state_three(self) -> str:
         """
         Process user subscribtion, add current user to db
         :return: Nothing
@@ -76,6 +78,17 @@ class UserParser:
         try:
             user_service.add_user(tg_id=self.tg_id, profession=self.profession, city=self.city)
             return f"Ти успішно підписався на вакансію {self.profession}"
+        except Exception as err:
+            logger.error(f"Error processing state three request: {err}")
+            raise err
+
+    def process_state_four(self):
+        try:
+            user_service.change_user_data(tg_id=self.tg_id, profession=self.profession, city=self.city)
+            return f"Дані були змінені. Ти успішно підписався на вакансію {self.profession}"
+        except ValueError as err:
+            logger.error(f"User is not created")
+            raise KeyError
         except Exception as err:
             logger.error(f"Error processing state three request: {err}")
             raise err
@@ -145,7 +158,6 @@ class UserService:
 
         for vacancy in data:
             if not existing_vacancies or vacancy["link"] not in existing_vacancies:
-
                 result.append(vacancy)
                 session.add(
                     Vacancy(
@@ -177,8 +189,46 @@ class UserService:
                      + DouParser(user.profession, user.city).get_result()
             relult.append((user.tg_id, cls.process_vacancies(tg_id=user.tg_id, data=result)))
 
-
         return relult
+
+    @staticmethod
+    def unsubscribe_user(tg_id: int) -> bool:
+        try:
+            user = session.query(User).filter_by(tg_id=tg_id).first()
+            if not user:
+                logger.error(f"User {tg_id} not found")
+                raise ValueError("User not found")
+
+            session.delete(user)
+            session.commit()
+
+            logger.info(f"User {tg_id} deleted")
+            return True
+        except ValueError as e:
+            logger.error(str(e))
+            raise e
+        except Exception as e:
+            raise e
+
+    @staticmethod
+    def change_user_data(tg_id: int, profession: str, city: str):
+        try:
+            user = session.query(User).filter_by(tg_id=tg_id).first()
+            if not user:
+                logger.error(f"User {tg_id} not found")
+                raise ValueError("User not found")
+
+            user.city = city
+            user.profession = profession
+            session.commit()
+
+            logger.info(f"User {tg_id} updated")
+            return True
+        except ValueError as e:
+            logger.error(str(e))
+            raise e
+        except Exception as e:
+            raise e
 
 
 user_service = UserService()

@@ -6,16 +6,13 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-
 from logger import logger
 from keyboards.keyboard_buttons import markup_keyboard, markup_keyboard_work
 from keyboards.inline_keyboard import markup_city
 from user import UserParser, user_service
 from waiting_state import GetProfession, GetResponse
 
-
-
-TOKEN =os.environ['TOKEN']
+TOKEN = os.environ['TOKEN']
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
@@ -44,7 +41,7 @@ async def cmd_start(message: types.Message):
     await GetResponse.waiting_for_response.set()
 
     @dp.message_handler(state=GetResponse.waiting_for_response)
-    async def send_response(message: types.Message, state: FSMContext,):
+    async def send_response(message: types.Message, state: FSMContext, ):
         await state.finish()
         response = message.text
         logger.info(f"User {message.from_user.id}|{message.from_user.full_name} left response {response}")
@@ -56,6 +53,28 @@ async def cmd_start(message: types.Message):
             document = types.InputFile(f)
             await bot.send_document(chat_id=404237030, document=document)
 
+
+@dp.message_handler(commands=["unsubscribe"])
+async def cmd_help(message: types.Message):
+    try:
+        if user_service.unsubscribe_user(message.from_user.id):
+            logger.info(f'{message.from_user.id} | {message.from_user.full_name} unsubscribed')
+            await bot.send_message(chat_id=message.chat.id, text="You won`t get new vacancyes")
+        else:
+            await bot.send_message(chat_id=message.chat.id, text="Something went wrong")
+    except ValueError:
+        await bot.send_message(chat_id=message.chat.id, text="You are not subscribed")
+
+
+
+@dp.message_handler(commands=["change_data"])
+async def cmd_help(message: types.Message):
+    logger.info(f'{message.from_user.id} | {message.from_user.full_name} want to change data')
+    users[message.chat.id] = {'state': 4,
+                              'tg_id': message.chat.id}
+    logger.info(users)
+    await bot.send_message(chat_id=message.chat.id,
+                           text='Обери місто, де хочеш знайти роботу', reply_markup=markup_city)
 
 
 @dp.message_handler(lambda message: message.text == "Знайти роботу")
@@ -115,6 +134,8 @@ async def city_processor(callback_query: types.CallbackQuery):
         except TypeError as tr:
             logger.error(f"Got unexpected variable {tr}")
             await bot.send_message(chat_id=message.chat.id, text="There was unexpected error")
+        except KeyError:
+            await bot.send_message(chat_id=message.chat.id, text="You can`t change data, firstly subscribe")
         except ValueError:
             await bot.send_message(chat_id=message.chat.id, text="You have already subscribed")
         except Exception:
@@ -134,7 +155,7 @@ async def send_updates():
             else:
                 await bot.send_message(chat_id=r[i][0], text=f"Нових вакансій не знайдено")
 
-        await asyncio.sleep(60*60*4)
+        await asyncio.sleep(60 * 60 * 4)
 
 
 async def main():
